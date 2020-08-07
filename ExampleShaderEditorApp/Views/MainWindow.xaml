@@ -21,6 +21,15 @@
         <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
         <Grid Grid.Column="2">
             <views:NetworkView x:Name="networkView"/>
+            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
+                <Button x:Name="Test1"  Content="ZoomIn" Click="Test1_Click"/>
+                <Button x:Name="Test2"  Content="ZoomOut" Click="Test2_Click"/>
+                <Button x:Name="Test3"  Content="Center" Click="Test3_Click"/>
+                <Button x:Name="Test4"  Content="Move100" Click="Test4_Click"/>
+                <Button x:Name="Test5"  Content="Center" />
+                <TextBox x:Name="MaxZoom" Width="50"/>
+                <TextBox x:Name="MinZoom" Width="50"/>
+            </StackPanel>
         </Grid>
         <GridSplitter Grid.Column="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
         <StackPanel Grid.Column="4" Orientation="Vertical" Background="#f1f1f1">

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -15,6 +16,25 @@ namespace NodeNetwork.Views.Controls
     public class DragCanvas : Canvas
     {
         #region Dragging
+
+        public static readonly DependencyProperty PositionOffsetProperty =
+            DependencyProperty.Register("PositionOffset", typeof(Point), typeof(DragCanvas), new PropertyMetadata(new Point(), PositionOffsetChanged));
+
+        public Point PositionOffset
+        {
+            get { return (Point)GetValue(PositionOffsetProperty); }
+            set { SetValue(PositionOffsetProperty, value); }
+        }
+
+        private static void PositionOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var canvas = (DragCanvas)d;
+            if (e.NewValue is Point position)
+            {
+                canvas.MoveChildren(position.X - canvas._previousPositionOffset.X, position.Y - canvas._previousPositionOffset.Y);
+            }
+        }
+
         /// <summary>
         /// Triggered when the user clicks and moves the canvas, starting a drag
         /// </summary>
@@ -61,6 +81,7 @@ namespace NodeNetwork.Views.Controls
         /// The position of the mouse (screen co-ordinate) when the previous DragDelta event was fired 
         /// </summary>
         private Point _previousMouseScreenPos;
+        private Point _previousPositionOffset;
 
         /// <summary> 
         /// This event puts the control into a state where it is ready for a drag operation.
@@ -71,8 +92,8 @@ namespace NodeNetwork.Views.Controls
             {
                 _userClickedThisElement = true;
 
-	            _previousMouseScreenPos = _originScreenCoordPosition = e.GetPosition(this);
-				Focus();
+                _previousMouseScreenPos = _originScreenCoordPosition = e.GetPosition(this);
+                Focus();
                 CaptureMouse(); //All mouse events will now be handled by the dragcanvas
             }
 
@@ -85,10 +106,10 @@ namespace NodeNetwork.Views.Controls
         protected override void OnMouseMove(MouseEventArgs e)
         {
             if (_userClickedThisElement && !_dragActive)
-			{
-				_dragActive = true;
-				DragStart?.Invoke(this, e);
-			}
+            {
+                _dragActive = true;
+                DragStart?.Invoke(this, e);
+            }
 
             if (_dragActive)
             {
@@ -102,7 +123,8 @@ namespace NodeNetwork.Views.Controls
                     var dragEvent = new DragMoveEventArgs(e, xDelta, yDelta);
                     DragMove?.Invoke(this, dragEvent);
 
-                    ApplyDragToChildren(dragEvent);
+                    MoveChildren(xDelta, yDelta);
+                    this.PositionOffset = _previousPositionOffset;
 
                     _previousMouseScreenPos = curMouseScreenPos;
                 }
@@ -123,7 +145,7 @@ namespace NodeNetwork.Views.Controls
             if (_dragActive)
             {
                 _dragActive = false;
-                
+
                 Point curMouseScreenPos = e.GetPosition(this);
                 double xDelta = curMouseScreenPos.X - _originScreenCoordPosition.X;
                 double yDelta = curMouseScreenPos.Y - _originScreenCoordPosition.Y;
@@ -134,7 +156,7 @@ namespace NodeNetwork.Views.Controls
             base.OnMouseLeftButtonUp(e);
         }
 
-        private void ApplyDragToChildren(DragMoveEventArgs drag)
+        private void MoveChildren(double deltaX, double deltaY)
         {
             foreach (UIElement cur in Children)
             {
@@ -150,20 +172,89 @@ namespace NodeNetwork.Views.Controls
                     prevTop = 0;
                 }
 
-                Canvas.SetLeft(cur, prevLeft + (drag.DeltaX));
-                Canvas.SetTop(cur, prevTop + (drag.DeltaY));
+                Canvas.SetLeft(cur, prevLeft + (deltaX));
+                Canvas.SetTop(cur, prevTop + (deltaY));
             }
+
+            _previousPositionOffset = new Point(_previousPositionOffset.X + deltaX, _previousPositionOffset.Y + deltaY);
         }
         #endregion
 
         #region Zoom
+
+        public static readonly DependencyProperty MaxWheelOffsetProperty =
+            DependencyProperty.Register("MaxWheelOffset", typeof(int), typeof(DragCanvas), new FrameworkPropertyMetadata(10, MaxWheelOffsetChanged));
+
+        public int MaxWheelOffset
+        {
+            get { return (int)GetValue(MaxWheelOffsetProperty); }
+            set { SetValue(MaxWheelOffsetProperty, value); }
+        }
+
+        private static void MaxWheelOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var canvas = (DragCanvas)d;
+            var binding = BindingOperations.GetBindingExpression(canvas, WheelOffsetProperty);
+            binding?.UpdateTarget();
+        }
+
+        public static readonly DependencyProperty MinWheelOffsetProperty =
+            DependencyProperty.Register("MinWheelOffset", typeof(int), typeof(DragCanvas), new FrameworkPropertyMetadata(-5, MinWheelOffsetChanged));
+
+        public int MinWheelOffset
+        {
+            get { return (int)GetValue(MinWheelOffsetProperty); }
+            set { SetValue(MinWheelOffsetProperty, value); }
+        }
+
+        private static void MinWheelOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var canvas = (DragCanvas)d;
+            var binding = BindingOperations.GetBindingExpression(canvas, WheelOffsetProperty);
+            binding?.UpdateTarget();
+        }
+
+        public static readonly DependencyProperty WheelOffsetProperty =
+            DependencyProperty.Register("WheelOffset", typeof(int), typeof(DragCanvas), new FrameworkPropertyMetadata(0, WheelOffsetChanged, WheelOffsetValueCoerce));
+
+        public int WheelOffset
+        {
+            get { return (int)GetValue(WheelOffsetProperty); }
+            set { SetValue(WheelOffsetProperty, value); }
+        }
+
+        private static void WheelOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var canvas = (DragCanvas)d;
+            if (e.NewValue is int wheelOffset && wheelOffset != canvas._wheelOffset)
+            {
+                canvas.SetOffset(wheelOffset, new Point(canvas.ActualWidth / 2, canvas.ActualHeight / 2));
+            }
+        }
+
+        private static object WheelOffsetValueCoerce(DependencyObject d, object baseValue)
+        {
+            if (baseValue is int intValue)
+            {
+                var canvas = (DragCanvas)d;
+                if (intValue < canvas.MinWheelOffset)
+                {
+                    return canvas.MinWheelOffset;
+                }
+                else if (intValue > canvas.MaxWheelOffset)
+                {
+                    return canvas.MaxWheelOffset;
+                }
+            }
+
+            return baseValue;
+        }
+
         public delegate void ZoomEvent(object source, ZoomEventArgs args);
         public event ZoomEvent Zoom;
 
-        private int _wheelOffset = 6;
-        private const int MinWheelOffset = 1;
-        private const int MaxWheelOffset = 15;
-        
+        private int _wheelOffset = 0;
+
         private ScaleTransform _curScaleTransform = new ScaleTransform(1.0, 1.0);
 
         private Rect ZoomView(Rect curView, double curZoom, double newZoom, Point relZoomPoint) //curView in content space, relZoomPoint is relative to view space
@@ -182,7 +273,7 @@ namespace NodeNetwork.Views.Controls
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             e.Handled = true;
-            
+
             //Calculate new scaling factor
             if ((_wheelOffset == MinWheelOffset && e.Delta < 0) || (_wheelOffset == MaxWheelOffset && e.Delta > 0))
             {
@@ -199,8 +290,15 @@ namespace NodeNetwork.Views.Controls
                 _wheelOffset = MaxWheelOffset;
             }
 
+            Point viewSpaceMousePos = e.GetPosition(this);
+            SetOffset(_wheelOffset, viewSpaceMousePos, e);
+            this.WheelOffset = _wheelOffset;
+        }
+
+        private void SetOffset(int offset, Point viewSpaceMousePos, MouseWheelEventArgs e = null)
+        {
             double oldScale = _curScaleTransform.ScaleX;
-            double newScale = Math.Log(1 + ((_wheelOffset) / 10d)) * 2d;
+            double newScale = Math.Log(1 + ((offset + 6) / 10d)) * 2d;
 
             //Calculate current viewing window onto the content
             Point topLeftContentSpace = TranslatePoint(new Point(0, 0), Children[0]);
@@ -212,7 +310,6 @@ namespace NodeNetwork.Views.Controls
             };
 
             //Mouse position as a fraction of the view size
-            Point viewSpaceMousePos = e.GetPosition(this);
             Point relZoomPoint = new Point
             {
                 X = viewSpaceMousePos.X / this.ActualWidth,
@@ -238,6 +335,7 @@ namespace NodeNetwork.Views.Controls
             ApplyZoomToChildren(zoomEvent);
 
             _curScaleTransform = newScaleTransform;
+            _wheelOffset = offset;
         }
 
         private void ApplyZoomToChildren(ZoomEventArgs e)
@@ -248,6 +346,27 @@ namespace NodeNetwork.Views.Controls
                 Canvas.SetLeft(cur, e.ContentOffset.X);
                 Canvas.SetTop(cur, e.ContentOffset.Y);
             }
+
+            _previousPositionOffset = new Point(e.ContentOffset.X, e.ContentOffset.Y);
+        }
+
+        internal void SetZoomLevelFor(Rect bounding)
+        {
+            //this.PositionOffset = bounding.Location;
+
+            //bounding.Scale(1d/_curScaleTransform.ScaleX, 1d / _curScaleTransform.ScaleY);
+
+            Point topLeftContentSpace = TranslatePoint(new Point(0, 0), Children[0]);
+            Point bottomRightContentSpace = TranslatePoint(new Point(ActualWidth, ActualHeight), Children[0]);
+            Rect curView = new Rect
+            {
+                Location = topLeftContentSpace,
+                Size = new Size(bottomRightContentSpace.X - topLeftContentSpace.X, bottomRightContentSpace.Y - topLeftContentSpace.Y)
+            };
+            var zoom = curView.Width * _curScaleTransform.ScaleX / bounding.Width;
+            zoom = Math.Pow(Math.E, (zoom) / 2d);
+            zoom = (-1 + zoom - 60d) / 10d;
+            WheelOffset = (int)zoom;
         }
         #endregion
     }

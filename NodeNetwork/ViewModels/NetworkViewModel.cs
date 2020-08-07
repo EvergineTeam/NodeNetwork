@@ -148,12 +148,62 @@ namespace NodeNetwork.ViewModels
         /// </summary>
         public CutLineViewModel CutLine { get; } = new CutLineViewModel();
         #endregion
-        
-        #region SelectionRectangle
+
+        #region View
         /// <summary>
         /// The viewmodel for the selection rectangle used in this network view.
         /// </summary>
         public SelectionRectangleViewModel SelectionRectangle { get; } = new SelectionRectangleViewModel();
+
+        /// <summary>
+        /// The zoom level used in this network view.
+        /// </summary>
+        public int ZoomLevel
+        {
+            get => _zoomLevel;
+            set => this.RaiseAndSetIfChanged(ref _zoomLevel, value);
+        }
+        private int _zoomLevel;
+
+        /// <summary>
+        /// The maximun zoom level used in this network view.
+        /// </summary>
+        public int MaxZoomLevel
+        {
+            get => _maxZoomLevel;
+            set => this.RaiseAndSetIfChanged(ref _maxZoomLevel, value);
+        }
+        private int _maxZoomLevel;
+
+        /// <summary>
+        /// The minimun zoom level used in this network view.
+        /// </summary>
+        public int MinZoomLevel
+        {
+            get => _minZoomLevel;
+            set => this.RaiseAndSetIfChanged(ref _minZoomLevel, value);
+        }
+        private int _minZoomLevel;
+
+        /// <summary>
+        /// The position used in this network view.
+        /// </summary>
+        public Point Position
+        {
+            get => _position;
+            set => this.RaiseAndSetIfChanged(ref _position, value);
+        }
+        private Point _position;
+
+        /// <summary>
+        /// A value indicating whether all nodes are visible and the view is centered.
+        /// </summary>
+        public bool AreAllNodesVisibleAndCentered
+        {
+            get => _areAllNodesVisibleAndCentered;
+            set => this.RaiseAndSetIfChanged(ref _areAllNodesVisibleAndCentered, value);
+        }
+        private bool _areAllNodesVisibleAndCentered;
         #endregion
 
         #region NetworkChanged
@@ -184,6 +234,11 @@ namespace NodeNetwork.ViewModels
         /// Runs the Validator function and stores the result in LatestValidation.
         /// </summary>
         public ReactiveCommand<Unit, NetworkValidationResult> UpdateValidation { get; }
+
+        /// <summary>
+        /// Center the view and sets the zoom to view all nodes.
+        /// </summary>
+        public ReactiveCommand<Unit, Unit> CenterView { get; }
         #endregion
 
         public NetworkViewModel()
@@ -193,7 +248,7 @@ namespace NodeNetwork.ViewModels
                 addedNode => addedNode.Parent = this,
                 removedNode => removedNode.Parent = null
             );
-            
+
             // SelectedNodes is a derived collection of all nodes with IsSelected = true.
             SelectedNodes = Nodes.Connect()
                 .AutoRefresh(node => node.IsSelected)
@@ -206,8 +261,13 @@ namespace NodeNetwork.ViewModels
                 Nodes.RemoveMany(SelectedNodes.Items.Where(n => n.CanBeRemovedByUser).ToArray());
             });
 
-			// When a node is removed, delete any connections from/to that node.
-			Nodes.Preview().OnItemRemoved(removedNode =>
+            CenterView = ReactiveCommand.Create(() =>
+            {
+                AreAllNodesVisibleAndCentered = true;
+            });
+
+            // When a node is removed, delete any connections from/to that node.
+            Nodes.Preview().OnItemRemoved(removedNode =>
             {
                 Connections.RemoveMany(removedNode.Inputs.Items.SelectMany(o => o.Connections.Items));
                 Connections.RemoveMany(removedNode.Outputs.Items.SelectMany(o => o.Connections.Items));
@@ -219,7 +279,7 @@ namespace NodeNetwork.ViewModels
                     RemovePendingConnection();
                 }
             }).Subscribe();
-            
+
             // When the list of nodes is reset, remove any connections whose input/output node was removed.
             /*Nodes.ShouldReset.Subscribe(_ =>
             {
@@ -252,7 +312,8 @@ namespace NodeNetwork.ViewModels
             Validator = _ => new NetworkValidationResult(true, true, null);
 
             // Setup the validation command.
-            UpdateValidation = ReactiveCommand.Create(() => {
+            UpdateValidation = ReactiveCommand.Create(() =>
+            {
                 var result = Validator(this);
                 LatestValidation = result;
                 return result;
@@ -315,7 +376,7 @@ namespace NodeNetwork.ViewModels
                 ).Select(_ => Unit.Default)
             );
         }
-        
+
         /// <summary>
         /// Clears SelectedNodes, setting the IsSelected property of all the nodes to false.
         /// </summary>
@@ -340,7 +401,7 @@ namespace NodeNetwork.ViewModels
         /// </summary>
         public void FinishCut()
         {
-			Connections.RemoveMany(CutLine.IntersectingConnections.Items);
+            Connections.RemoveMany(CutLine.IntersectingConnections.Items);
             CutLine.IsVisible = false;
         }
 

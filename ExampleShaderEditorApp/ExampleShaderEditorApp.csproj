@@ -8,9 +8,6 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System.Windows" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Resources\Models\suzanne.obj">
       <SubType>Designer</SubType>
     </EmbeddedResource>

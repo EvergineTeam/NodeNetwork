@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using ExampleShaderEditorApp.ViewModels;
+using NodeNetwork.Views.Controls;
 using ReactiveUI;
 
 namespace ExampleShaderEditorApp.Views
@@ -37,6 +38,9 @@ namespace ExampleShaderEditorApp.Views
             {
                 this.OneWayBind(ViewModel, vm => vm.NodeListViewModel, v => v.nodeList.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.NetworkViewModel, v => v.networkView.ViewModel).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.NetworkViewModel.MaxZoomLevel, v => v.MaxZoom.Text).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.NetworkViewModel.MinZoomLevel, v => v.MinZoom.Text).DisposeWith(d);
+                this.BindCommand(ViewModel, x => x.NetworkViewModel.CenterView, v => v.Test5).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.ShaderPreviewViewModel, v => v.shaderPreviewView.ViewModel).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.ShaderPreviewViewModel.FragmentShaderSource, v => v.shaderSource.Text, source => string.Join("\n", source)).DisposeWith(d);
 
@@ -44,6 +48,26 @@ namespace ExampleShaderEditorApp.Views
             });
 
             nodeList.CVS.GroupDescriptions.Add(new PropertyGroupDescription("Category"));
+        }
+
+        private void Test1_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.NetworkViewModel.ZoomLevel++;
+        }
+
+        private void Test2_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.NetworkViewModel.ZoomLevel--;
+        }
+
+        private void Test3_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.NetworkViewModel.Position = new Point();
+        }
+
+        private void Test4_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.NetworkViewModel.Position = new Point(ViewModel.NetworkViewModel.Position.X + 100, ViewModel.NetworkViewModel.Position.Y);
         }
     }
 }

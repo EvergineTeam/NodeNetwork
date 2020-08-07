@@ -176,6 +176,18 @@ namespace NodeNetwork.Views
             {
 	            this.BindList(ViewModel, vm => vm.Connections, v => v.connectionsControl.ItemsSource).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.PendingConnection, v => v.pendingConnectionView.ViewModel).DisposeWith(d);
+                //this.Bind(ViewModel, vm => vm.ZoomLevel, v => v.dragCanvas.WheelOffset).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.MaxZoomLevel, v => v.dragCanvas.MaxWheelOffset).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.MinZoomLevel, v => v.dragCanvas.MinWheelOffset).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.Position, v => v.dragCanvas.PositionOffset).DisposeWith(d);
+                this.WhenAnyValue(v => v.ViewModel.AreAllNodesVisibleAndCentered)
+                    .Where(x => x)
+                    .Subscribe(x =>
+                    {
+                        CenterAndZoomView();
+                        ViewModel.AreAllNodesVisibleAndCentered = false;
+                    })
+                    .DisposeWith(d);
 
                 this.Events().MouseMove
                     .Select(e => e.GetPosition(contentContainer))
@@ -498,6 +510,36 @@ namespace NodeNetwork.Views
                 bool hasIntersections = WPFUtils.GetIntersectionPoints(conGeom, cutLineGeom).Any();
                 yield return (con, hasIntersections);
             }
+        }
+
+        private void CenterAndZoomView()
+        {
+            var nodes = ViewModel.Nodes.Items.ToArray();
+            var topLeft = new Point();
+            var bottomRight = new Point();
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                var currentTopLeft = contentContainer.TranslatePoint(nodes[i].Position, dragCanvas);
+                var currentBottomRight = contentContainer.TranslatePoint(Point.Add(nodes[i].Position, new Vector(nodes[i].Size.Width, nodes[i].Size.Height)), dragCanvas);
+                if (i == 0)
+                {
+                    topLeft = currentTopLeft;
+                    bottomRight = currentBottomRight;
+                }
+
+                if (currentTopLeft.X < topLeft.X || currentTopLeft.Y < topLeft.Y)
+                {
+                    topLeft = currentTopLeft;
+                }
+
+                if (currentBottomRight.X > bottomRight.X || currentBottomRight.Y > bottomRight.Y)
+                {
+                    bottomRight = currentBottomRight;
+                }
+            }
+
+            var bounding = new Rect(topLeft, bottomRight);
+            this.dragCanvas?.SetZoomLevelFor(bounding);
         }
     }
 }
