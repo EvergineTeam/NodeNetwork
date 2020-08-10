@@ -176,7 +176,7 @@ namespace NodeNetwork.Views
             {
 	            this.BindList(ViewModel, vm => vm.Connections, v => v.connectionsControl.ItemsSource).DisposeWith(d);
                 this.OneWayBind(ViewModel, vm => vm.PendingConnection, v => v.pendingConnectionView.ViewModel).DisposeWith(d);
-                //this.Bind(ViewModel, vm => vm.ZoomLevel, v => v.dragCanvas.WheelOffset).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.ZoomLevel, v => v.dragCanvas.WheelOffset).DisposeWith(d);
                 this.Bind(ViewModel, vm => vm.MaxZoomLevel, v => v.dragCanvas.MaxWheelOffset).DisposeWith(d);
                 this.Bind(ViewModel, vm => vm.MinZoomLevel, v => v.dragCanvas.MinWheelOffset).DisposeWith(d);
                 this.Bind(ViewModel, vm => vm.Position, v => v.dragCanvas.PositionOffset).DisposeWith(d);

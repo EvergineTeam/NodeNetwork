@@ -158,42 +158,42 @@ namespace NodeNetwork.ViewModels
         /// <summary>
         /// The zoom level used in this network view.
         /// </summary>
-        public int ZoomLevel
+        public int? ZoomLevel
         {
             get => _zoomLevel;
             set => this.RaiseAndSetIfChanged(ref _zoomLevel, value);
         }
-        private int _zoomLevel;
+        private int? _zoomLevel;
 
         /// <summary>
         /// The maximun zoom level used in this network view.
         /// </summary>
-        public int MaxZoomLevel
+        public int? MaxZoomLevel
         {
             get => _maxZoomLevel;
             set => this.RaiseAndSetIfChanged(ref _maxZoomLevel, value);
         }
-        private int _maxZoomLevel;
+        private int? _maxZoomLevel;
 
         /// <summary>
         /// The minimun zoom level used in this network view.
         /// </summary>
-        public int MinZoomLevel
+        public int? MinZoomLevel
         {
             get => _minZoomLevel;
             set => this.RaiseAndSetIfChanged(ref _minZoomLevel, value);
         }
-        private int _minZoomLevel;
+        private int? _minZoomLevel;
 
         /// <summary>
         /// The position used in this network view.
         /// </summary>
-        public Point Position
+        public Point? Position
         {
             get => _position;
             set => this.RaiseAndSetIfChanged(ref _position, value);
         }
-        private Point _position;
+        private Point? _position;
 
         /// <summary>
         /// A value indicating whether all nodes are visible and the view is centered.
