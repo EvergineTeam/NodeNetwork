@@ -333,6 +333,7 @@ namespace NodeNetwork.Views.Controls
             Zoom?.Invoke(this, zoomEvent);
 
             ApplyZoomToChildren(zoomEvent);
+            PositionOffset = new Point(zoomEvent.ContentOffset.X, zoomEvent.ContentOffset.Y);
 
             _curScaleTransform = newScaleTransform;
             _wheelOffset = offset;
@@ -343,30 +344,35 @@ namespace NodeNetwork.Views.Controls
             foreach (UIElement cur in this.Children)
             {
                 cur.RenderTransform = e.NewScale;
-                Canvas.SetLeft(cur, e.ContentOffset.X);
-                Canvas.SetTop(cur, e.ContentOffset.Y);
             }
-
-            _previousPositionOffset = new Point(e.ContentOffset.X, e.ContentOffset.Y);
         }
 
         internal void SetZoomLevelFor(Rect bounding)
         {
-            //this.PositionOffset = bounding.Location;
+            // Get current view size
+            var topLeftContentSpace = TranslatePoint(new Point(0, 0), Children[0]);
+            var bottomRightContentSpace = TranslatePoint(new Point(ActualWidth, ActualHeight), Children[0]);
+            var curViewSize = new Size(bottomRightContentSpace.X - topLeftContentSpace.X, bottomRightContentSpace.Y - topLeftContentSpace.Y);
 
-            //bounding.Scale(1d/_curScaleTransform.ScaleX, 1d / _curScaleTransform.ScaleY);
+            // Calc new scale
+            var newScaleX = _curScaleTransform.ScaleX * curViewSize.Width / bounding.Width;
+            var newScaleY = _curScaleTransform.ScaleY * curViewSize.Height / bounding.Height;
+            // Calc new zoom
+            var zoom = 10d * Math.Pow(Math.E, Math.Min(newScaleX, newScaleY) / 2) - 16;
+            WheelOffset = (int)Math.Floor(zoom);
+            
+            this.UpdateLayout();
 
-            Point topLeftContentSpace = TranslatePoint(new Point(0, 0), Children[0]);
-            Point bottomRightContentSpace = TranslatePoint(new Point(ActualWidth, ActualHeight), Children[0]);
-            Rect curView = new Rect
-            {
-                Location = topLeftContentSpace,
-                Size = new Size(bottomRightContentSpace.X - topLeftContentSpace.X, bottomRightContentSpace.Y - topLeftContentSpace.Y)
-            };
-            var zoom = curView.Width * _curScaleTransform.ScaleX / bounding.Width;
-            zoom = Math.Pow(Math.E, (zoom) / 2d);
-            zoom = (-1 + zoom - 60d) / 10d;
-            WheelOffset = (int)zoom;
+            var boundingCenter = new Point(bounding.TopLeft.X + bounding.Width / 2d, bounding.TopLeft.Y + bounding.Height / 2d);
+
+            // Update current view size
+            topLeftContentSpace = TranslatePoint(new Point(0, 0), Children[0]);
+            bottomRightContentSpace = TranslatePoint(new Point(ActualWidth, ActualHeight), Children[0]);
+            curViewSize = new Size(bottomRightContentSpace.X - topLeftContentSpace.X, bottomRightContentSpace.Y - topLeftContentSpace.Y);
+
+            // Calc new position offset
+            var viewOffset = new Point(boundingCenter.X - curViewSize.Width / 2d, boundingCenter.Y - curViewSize.Height / 2d);
+            this.PositionOffset = new Point(-viewOffset.X * _curScaleTransform.ScaleX, -viewOffset.Y * _curScaleTransform.ScaleY);
         }
         #endregion
     }
