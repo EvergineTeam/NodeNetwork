@@ -17,7 +17,7 @@ namespace ExampleShaderEditorApp.ViewModels
     public class MainViewModel : ReactiveObject
     {
         public NodeListViewModel NodeListViewModel { get; } = new NodeListViewModel();
-        public NetworkViewModel NetworkViewModel { get; } = new NetworkViewModel() { ZoomLevel = 0 };
+        public NetworkViewModel NetworkViewModel { get; } = new NetworkViewModel();
         public ShaderPreviewViewModel ShaderPreviewViewModel { get; } = new ShaderPreviewViewModel();
 
         public ShaderOutputNodeViewModel ShaderOutputNode { get; } = new ShaderOutputNodeViewModel();
