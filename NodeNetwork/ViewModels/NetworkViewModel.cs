@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using DynamicData;
 using DynamicData.Alias;
+using System.Windows.Input;
 
 namespace NodeNetwork.ViewModels
 {
@@ -194,16 +195,6 @@ namespace NodeNetwork.ViewModels
             set => this.RaiseAndSetIfChanged(ref _position, value);
         }
         private Point? _position;
-
-        /// <summary>
-        /// A value indicating whether all nodes are visible and the view is centered.
-        /// </summary>
-        public bool AreAllNodesVisibleAndCentered
-        {
-            get => _areAllNodesVisibleAndCentered;
-            set => this.RaiseAndSetIfChanged(ref _areAllNodesVisibleAndCentered, value);
-        }
-        private bool _areAllNodesVisibleAndCentered;
         #endregion
 
         #region NetworkChanged
@@ -238,7 +229,7 @@ namespace NodeNetwork.ViewModels
         /// <summary>
         /// Center the view and sets the zoom to view all nodes.
         /// </summary>
-        public ReactiveCommand<Unit, Unit> CenterView { get; }
+        public ICommand CenterView { get; set; }
         #endregion
 
         public NetworkViewModel()
@@ -259,11 +250,6 @@ namespace NodeNetwork.ViewModels
             DeleteSelectedNodes = ReactiveCommand.Create(() =>
             {
                 Nodes.RemoveMany(SelectedNodes.Items.Where(n => n.CanBeRemovedByUser).ToArray());
-            });
-
-            CenterView = ReactiveCommand.Create(() =>
-            {
-                AreAllNodesVisibleAndCentered = true;
             });
 
             // When a node is removed, delete any connections from/to that node.

@@ -136,6 +136,10 @@ namespace NodeNetwork.Views
         }
         #endregion
 
+        #region Center view command
+        public ICommand CenterViewCommand { get; }
+        #endregion
+
         /// <summary>
         /// The element that is used as an origin for the position of the elements of the network.
         /// </summary>
@@ -160,6 +164,8 @@ namespace NodeNetwork.Views
             SetupErrorMessages();
             SetupDragAndDrop();
             SetupSelectionRectangle();
+
+            CenterViewCommand = ReactiveCommand.Create(this.CenterAndZoomView);
         }
 
         #region Setup
@@ -180,14 +186,7 @@ namespace NodeNetwork.Views
                 this.Bind(ViewModel, vm => vm.MaxZoomLevel, v => v.dragCanvas.MaxWheelOffset).DisposeWith(d);
                 this.Bind(ViewModel, vm => vm.MinZoomLevel, v => v.dragCanvas.MinWheelOffset).DisposeWith(d);
                 this.Bind(ViewModel, vm => vm.Position, v => v.dragCanvas.PositionOffset).DisposeWith(d);
-                this.WhenAnyValue(v => v.ViewModel.AreAllNodesVisibleAndCentered)
-                    .Where(x => x)
-                    .Subscribe(x =>
-                    {
-                        CenterAndZoomView();
-                        ViewModel.AreAllNodesVisibleAndCentered = false;
-                    })
-                    .DisposeWith(d);
+                this.WhenAnyValue(v => v.CenterViewCommand).BindTo(this, x => x.ViewModel.CenterView).DisposeWith(d);
 
                 this.Events().MouseMove
                     .Select(e => e.GetPosition(contentContainer))
