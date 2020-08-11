@@ -464,33 +464,42 @@ namespace NodeNetwork.Views
         #region Node move events
         private void OnNodeDragStart(object sender, DragStartedEventArgs e)
         {
-            if (NodeMoveStart != null)
+            if (sender is FrameworkElement element && element.IsMouseDirectlyOver)
             {
-                var args = new NodeMoveStartEventArgs(ViewModel.SelectedNodes.Items, e);
-                NodeMoveStart(sender, args);
+                if (NodeMoveStart != null)
+                {
+                    var args = new NodeMoveStartEventArgs(ViewModel.SelectedNodes.Items, e);
+                    NodeMoveStart(sender, args);
+                }
             }
         }
 
         private void OnNodeDrag(object sender, DragDeltaEventArgs e)
         {
-            foreach (NodeViewModel node in ViewModel.SelectedNodes.Items)
+            if (sender is FrameworkElement element && element.IsMouseDirectlyOver)
             {
-                node.Position = new Point(node.Position.X + e.HorizontalChange, node.Position.Y + e.VerticalChange);
-            }
+                foreach (NodeViewModel node in ViewModel.SelectedNodes.Items)
+                {
+                    node.Position = new Point(node.Position.X + e.HorizontalChange, node.Position.Y + e.VerticalChange);
+                }
 
-            if (NodeMove != null)
-            {
-                var args = new NodeMoveEventArgs(ViewModel.SelectedNodes.Items, e);
-                NodeMove(sender, args);
+                if (NodeMove != null)
+                {
+                    var args = new NodeMoveEventArgs(ViewModel.SelectedNodes.Items, e);
+                    NodeMove(sender, args);
+                }
             }
         }
 
         private void OnNodeDragEnd(object sender, DragCompletedEventArgs e)
         {
-            if (NodeMoveEnd != null)
+            if (sender is FrameworkElement element && element.IsMouseDirectlyOver)
             {
-                var args = new NodeMoveEndEventArgs(ViewModel.SelectedNodes.Items, e);
-                NodeMoveEnd(sender, args);
+                if (NodeMoveEnd != null)
+                {
+                    var args = new NodeMoveEndEventArgs(ViewModel.SelectedNodes.Items, e);
+                    NodeMoveEnd(sender, args);
+                }
             }
         }
         #endregion
