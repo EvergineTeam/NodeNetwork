@@ -186,28 +186,34 @@ namespace NodeNetwork.Views
                 }
 
                 networkView.dragCanvas.WhenAnyValue(x => x.PositionOffset, x => x.WheelOffset, x => x.ActualWidth, x => x.ActualHeight, x => x.RenderTransform)
-                    .Subscribe(x =>
-                    {
-                        if (!this.IsVisible)
-                        {
-                            return;
-                        }
+                    .Subscribe(x => networkView.dragCanvas.Events().LayoutUpdated.Take(1).Subscribe(y => UpdateCenterPoint(networkView)).DisposeWith(d))
+                    .DisposeWith(d);
 
-                        Point center = new Point(this.ActualWidth / 2d, this.ActualHeight / 2d);
-                        if (Margin.Left < 0)
-                        {
-                            center.X += Margin.Left;
-                        }
-                        else if (Margin.Right < 0)
-                        {
-                            center.X -= Margin.Right;
-                        }
-
-                        var transform = this.TransformToAncestor(networkView.contentContainer);
-                        ViewModel.CenterPoint = transform.Transform(center);
-                    })
+                ViewModel.Parent.Parent.WhenAnyValue(x => x.Position)
+                    .Subscribe(x => networkView.dragCanvas.Events().LayoutUpdated.Take(1).Subscribe(y => UpdateCenterPoint(networkView)).DisposeWith(d))
                     .DisposeWith(d);
             });
+        }
+
+        private void UpdateCenterPoint(NetworkView networkView)
+        {
+            if (!this.IsVisible)
+            {
+                return;
+            }
+
+            Point center = new Point(this.ActualWidth / 2d, this.ActualHeight / 2d);
+            if (Margin.Left < 0)
+            {
+                center.X += Margin.Left;
+            }
+            else if (Margin.Right < 0)
+            {
+                center.X -= Margin.Right;
+            }
+
+            var transform = this.TransformToAncestor(networkView.contentContainer);
+            ViewModel.CenterPoint = transform.Transform(center);
         }
 
         private void SetupMouseEvents()
