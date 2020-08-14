@@ -35,6 +35,17 @@ namespace NodeNetwork.Views.Controls
             }
         }
 
+        public static readonly DependencyProperty DragMouseButtonProperty =
+            DependencyProperty.Register("DragMouseButton", typeof(MouseButton), typeof(DragCanvas), new PropertyMetadata(MouseButton.Left));
+
+        public MouseButton DragMouseButton
+        {
+            get { return (MouseButton)GetValue(DragMouseButtonProperty); }
+            set { SetValue(DragMouseButtonProperty, value); }
+        }
+
+        public Func<MouseButtonEventArgs, bool> ShouldMove { get; set; }
+
         /// <summary>
         /// Triggered when the user clicks and moves the canvas, starting a drag
         /// </summary>
@@ -86,9 +97,9 @@ namespace NodeNetwork.Views.Controls
         /// <summary> 
         /// This event puts the control into a state where it is ready for a drag operation.
         /// </summary>
-        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (IsDraggingEnabled)
+            if (IsDraggingEnabled && ShouldMove(e))
             {
                 _userClickedThisElement = true;
 
@@ -97,7 +108,7 @@ namespace NodeNetwork.Views.Controls
                 CaptureMouse(); //All mouse events will now be handled by the dragcanvas
             }
 
-            base.OnMouseLeftButtonDown(e);
+            base.OnMouseDown(e);
         }
 
         /// <summary> 
@@ -137,23 +148,26 @@ namespace NodeNetwork.Views.Controls
         /// <summary>
         /// Stop dragging when the user releases the left mouse button
         /// </summary>
-        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        protected override void OnMouseUp(MouseButtonEventArgs e)
         {
-            _userClickedThisElement = false;
-            ReleaseMouseCapture(); //Stop absorbing all mouse events
-
-            if (_dragActive)
+            if (ShouldMove(e))
             {
-                _dragActive = false;
+                _userClickedThisElement = false;
+                ReleaseMouseCapture(); //Stop absorbing all mouse events
 
-                Point curMouseScreenPos = e.GetPosition(this);
-                double xDelta = curMouseScreenPos.X - _originScreenCoordPosition.X;
-                double yDelta = curMouseScreenPos.Y - _originScreenCoordPosition.Y;
+                if (_dragActive)
+                {
+                    _dragActive = false;
 
-                DragStop?.Invoke(this, new DragMoveEventArgs(e, xDelta, yDelta));
+                    Point curMouseScreenPos = e.GetPosition(this);
+                    double xDelta = curMouseScreenPos.X - _originScreenCoordPosition.X;
+                    double yDelta = curMouseScreenPos.Y - _originScreenCoordPosition.Y;
+
+                    DragStop?.Invoke(this, new DragMoveEventArgs(e, xDelta, yDelta));
+                }
             }
 
-            base.OnMouseLeftButtonUp(e);
+            base.OnMouseUp(e);
         }
 
         private void MoveChildren(double deltaX, double deltaY)
@@ -375,6 +389,11 @@ namespace NodeNetwork.Views.Controls
             this.PositionOffset = new Point(-viewOffset.X * _curScaleTransform.ScaleX, -viewOffset.Y * _curScaleTransform.ScaleY);
         }
         #endregion
+
+        public DragCanvas()
+        {
+            this.ShouldMove = (e) => e.ChangedButton == DragMouseButton;
+        }
     }
 
     public class DragMoveEventArgs : EventArgs

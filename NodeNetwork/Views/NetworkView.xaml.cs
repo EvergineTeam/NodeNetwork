@@ -141,6 +141,14 @@ namespace NodeNetwork.Views
         public ICommand CenterViewCommand { get; }
         #endregion
 
+        #region Interaction
+        public Func<MouseEventArgs, bool> ShouldStartCutLine { get; set; } = (e) => e.RightButton == MouseButtonState.Pressed;
+
+        public Func<MouseButtonEventArgs, bool> ShouldStartSelectionRectangle { get; set; } = (e) => e.ChangedButton == MouseButton.Left && Keyboard.IsKeyDown(Key.LeftShift);
+
+        public Func<MouseButtonEventArgs, bool> ShouldStartMove { get => this.dragCanvas.ShouldMove; set => this.dragCanvas.ShouldMove = value; }
+        #endregion
+
         /// <summary>
         /// The element that is used as an origin for the position of the elements of the network.
         /// </summary>
@@ -222,18 +230,21 @@ namespace NodeNetwork.Views
                     isVisible => isVisible ? Visibility.Visible : Visibility.Collapsed)
                     .DisposeWith(d);
 
-                dragCanvas.Events().MouseRightButtonDown.Subscribe(e =>
+                dragCanvas.Events().MouseDown.Subscribe(e =>
                 {
-                    Point pos = e.GetPosition(contentContainer);
-                    ViewModel.CutLine.StartPoint = pos;
-                    ViewModel.CutLine.EndPoint = pos;
+                    if (ShouldStartCutLine(e))
+                    {
+                        Point pos = e.GetPosition(contentContainer);
+                        ViewModel.CutLine.StartPoint = pos;
+                        ViewModel.CutLine.EndPoint = pos;
 
-                    e.Handled = true;
+                        e.Handled = true;
+                    }
                 }).DisposeWith(d);
 
                 dragCanvas.Events().MouseMove.Subscribe(e =>
                 {
-	                if (e.RightButton == MouseButtonState.Pressed)
+	                if (ShouldStartCutLine(e))
 	                {
 		                if (!ViewModel.CutLine.IsVisible)
 		                {
@@ -253,15 +264,15 @@ namespace NodeNetwork.Views
                     
                 }).DisposeWith(d);
 
-                dragCanvas.Events().MouseRightButtonUp.Subscribe(e =>
+                dragCanvas.Events().MouseUp.Subscribe(e =>
                 {
-	                if (ViewModel.CutLine.IsVisible)
-	                {
-		                //Do cuts
-		                ViewModel.FinishCut();
+                    if (ViewModel.CutLine.IsVisible)
+                    {
+                        //Do cuts
+                        ViewModel.FinishCut();
 
-		                e.Handled = true;
-	                }
+                        e.Handled = true;
+                    }
                 }).DisposeWith(d);
             });
         }
@@ -381,7 +392,7 @@ namespace NodeNetwork.Views
 
                 this.Events().PreviewMouseDown.Subscribe(e =>
                 {
-                    if (ViewModel != null && e.ChangedButton == MouseButton.Left && Keyboard.IsKeyDown(Key.LeftShift))
+                    if (ViewModel != null && this.dragCanvas.IsMouseDirectlyOver && ShouldStartSelectionRectangle(e))
                     {
                         CaptureMouse();
                         dragCanvas.IsDraggingEnabled = false;
