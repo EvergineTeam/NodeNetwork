@@ -13,7 +13,7 @@ namespace NodeNetwork.Toolkit.ValueNode
     {
         static ValueNodeOutputViewModel()
         {
-            Splat.Locator.CurrentMutable.Register(() => new NodeOutputView(), typeof(IViewFor<ValueNodeOutputViewModel<T>>));
+            NNViewRegistrar.AddRegistration(() => new NodeOutputView(), typeof(IViewFor<ValueNodeOutputViewModel<T>>));
         }
         
         #region Value
@@ -33,7 +33,7 @@ namespace NodeNetwork.Toolkit.ValueNode
         /// The latest value produced by this output.
         /// </summary>
         public T CurrentValue => _currentValue.Value;
-        private ObservableAsPropertyHelper<T> _currentValue;
+        private readonly ObservableAsPropertyHelper<T> _currentValue;
         #endregion
 
         public ValueNodeOutputViewModel()

@@ -26,7 +26,7 @@ namespace NodeNetwork.ViewModels
     {
         static NetworkViewModel()
         {
-            Splat.Locator.CurrentMutable.Register(() => new NetworkView(), typeof(IViewFor<NetworkViewModel>));
+            NNViewRegistrar.AddRegistration(() => new NetworkView(), typeof(IViewFor<NetworkViewModel>));
         }
 
         #region Logger
@@ -150,7 +150,27 @@ namespace NodeNetwork.ViewModels
         public CutLineViewModel CutLine { get; } = new CutLineViewModel();
         #endregion
 
-        #region View
+        #region ZoomFactor
+        /// <summary>
+        /// Scale of the view. Larger means more zoomed in. Default value is 1. Must be greater than zero.
+        /// </summary>
+        public double ZoomFactor
+        {
+            get => _zoomFactor;
+            set
+            {
+                if (value <= 0)
+                {
+                    throw new ArgumentException("ZoomFactor must be greater than zero");
+                }
+                this.RaiseAndSetIfChanged(ref _zoomFactor, value);
+            }
+        }
+
+        private double _zoomFactor = 1;
+        #endregion
+
+        #region SelectionRectangle
         /// <summary>
         /// The viewmodel for the selection rectangle used in this network view.
         /// </summary>
@@ -340,6 +360,8 @@ namespace NodeNetwork.ViewModels
             //  - Network validation changes
             NetworkChanged = Observable.Merge(
                 Observable.Select(Nodes.Connect(), _ => Unit.Default),
+                Observable.Select(Nodes.Connect().MergeMany(node => node.Inputs.Connect()), _ => Unit.Default),
+                Observable.Select(Nodes.Connect().MergeMany(node => node.Outputs.Connect()), _ => Unit.Default),
                 ConnectionsUpdated,
                 OnEditorChanged(),
                 Validation.Select(_ => Unit.Default)

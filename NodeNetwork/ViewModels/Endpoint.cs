@@ -70,6 +70,19 @@ namespace NodeNetwork.ViewModels
         private string _name = "";
         #endregion
 
+        #region Group
+
+        /// <summary>
+        /// The group the end point belongs to. Can be null.
+        /// </summary>
+        public EndpointGroup Group
+        {
+            get => _group;
+            set => this.RaiseAndSetIfChanged(ref _group, value);
+        }
+        private EndpointGroup _group;
+        #endregion
+
         #region Icon
         /// <summary>
         /// The icon displayed near the endpoint label
@@ -154,7 +167,19 @@ namespace NodeNetwork.ViewModels
         }
         private EndpointVisibility _visibility;
         #endregion
-        
+
+        #region SortIndex
+        /// <summary>
+        /// Inputs and outputs are sorted by increasing values of SortIndex before being displayed.
+        /// </summary>
+        public int SortIndex
+        {
+            get => _sortIndex;
+            set => this.RaiseAndSetIfChanged(ref _sortIndex, value);
+        }
+        private int _sortIndex;
+        #endregion
+
         protected Endpoint()
         {
             Port = new PortViewModel();
