@@ -17,7 +17,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DocumentationFile>bin\Release\NodeNetwork.xml</DocumentationFile>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition="$(TargetFramework) == 'net472'">
     <Reference Include="PresentationFramework.Aero" />
     <Reference Include="System.Windows" />
   </ItemGroup>
